@@ -211,7 +211,7 @@ class Login:
                 'User-Agent': self.config.get('crawler','User-Agent'),
                 'Cookie': cookie_str}
         #headers = {'User-Agent': self.config.get('crawler','User-Agent')}
-        to_visit_url = 'http://weibo.cn/xicilion'
+        to_visit_url = 'http://weibo.cn/2041028560/info'
         req = urllib2.Request(url = to_visit_url, headers=headers)
         try:
             response = self.opener.open(req)
@@ -225,7 +225,7 @@ class Login:
             html = 'ERROR' 
             # TODO you need to think calfully how to deal with this login error here
         finally:
-            file = open('visit.html','w')
+            file = open('test.html','w')
             file.write(html)
             file.close()
 
