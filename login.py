@@ -211,7 +211,7 @@ class Login:
                 'User-Agent': self.config.get('crawler','User-Agent'),
                 'Cookie': cookie_str}
         #headers = {'User-Agent': self.config.get('crawler','User-Agent')}
-        to_visit_url = 'http://weibo.cn/2041028560/info'
+        to_visit_url = 'http://weibo.cn/1644798402/info'
         req = urllib2.Request(url = to_visit_url, headers=headers)
         try:
             response = self.opener.open(req)

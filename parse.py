@@ -6,6 +6,12 @@ import os
 import logging
 import time
 import sys
+import urllib2
+from urllib2 import Request, build_opener, urlopen, HTTPCookieProcessor, HTTPHandler, URLError, HTTPError
+
+
+from bs4 import BeautifulSoup
+from bs4 import BeautifulStoneSoup
 
 
 """
@@ -18,25 +24,32 @@ SORRY for those DIRTY codes.......so sorry :)
 def parse_user_home(home):
     """
     this function will take the user_home.wml as input
-    and then get the users following, followers and status_counts,
+    and then get the user_id, users following, followers and status_counts,
     would return a dict
     """
-    user_home = {'followings_count':'', 'followers_count':'', 'statuses_count':''}
+    user_home = {'user_id':'','followings_count':'', 'followers_count':'', 'statuses_count':''}
     try:
+        home_soup = BeautifulSoup(home)
+        user_info_html = home_soup.find_all(href=re.compile("/info"))[0]
+        user_id_href_str = str(user_info_html['href'])
+        print user_id_href_str
+        start_index = 1
+        end_index = start_index + user_id_href_str[start_index:].index('/info')
+        user_home['user_id'] = user_id_href_str[start_index:end_index]
+        status_start_index = home.index('微博[') + len('微博[')
+        status_end_index = status_start_index + home[status_start_index:].find(']')
+        user_home['statuses_count'] = home[status_start_index:status_end_index]
         following_start_index = home.index('关注[') + len('关注[')
         following_end_index = following_start_index + home[following_start_index:].find(']')
         user_home['followings_count'] = home[following_start_index:following_end_index]
         follower_start_index = home.index('粉丝[') + len('粉丝[')
         follower_end_index = follower_start_index + home[follower_start_index:].find(']')
         user_home['followers_count'] = home[follower_start_index:follower_end_index]
-        status_start_index = home.index('微博[') + len('微博[')
-        status_end_index = status_start_index + home[status_start_index:].find(']')
-        user_home['statuses_count'] = home[status_start_index:status_end_index]
     except:
-        user_home = {'followings_count':'', 'followers_count':'', 'statuses_count':''}
+        user_home = {'user_id':'', 'followings_count':'', 'followers_count':'', 'statuses_count':''}
     return user_home
 
-def parse_user_info(info):
+def parse_user_info(info, headers, opener, logger):
     """
     this function will take the user_info.wml as input
     and then get all the users info,
@@ -55,27 +68,58 @@ def parse_user_info(info):
         profile_img_start_index = img_part.rindex('src="') + len('src="')
         profile_img_end_index = profile_img_start_index + img_part[profile_img_start_index:].index('"')
         user_info['profile_image_url'] = img_part[profile_img_start_index:profile_img_end_index]
-        info = info[img_part_end_index:]
+        #if using soup, sentence below should be comment
+        #info = info[img_part_end_index:]
         start_index = info.index('?uid=') + len('?uid=')
         end_index = start_index + info[start_index:].index('"')
         print info[start_index:end_index]
         user_info['idusers'] = info[start_index:end_index]
     except:
         user_info['profile_image_url'] = ""
-    user_info['screen_name'] = get_user_info_by_key(">昵称:",info)
-    if -1 != info.find('>认证:'):
+    try:
+        soup = BeautifulSoup(info)
+        tip_div_list = soup.find_all("div", class_="tip")
+        basic_info_soup = tip_div_list[0].find_next()
+        basic_info = str(basic_info_soup)
+    except:
+        logger.error("seems to be the html has no such class, maybe speed is too fast")
+        logger.info(info)
+        sys.exit(1)
+        return user_info
+    user_info['screen_name'] = get_user_info_by_key(">昵称:",basic_info)
+    if -1 != basic_info.find('>认证:'):
         user_info['is_verified'] = '1'
-        user_info['verify_info'] = get_user_info_by_key(">认证:",info)
+        user_info['verify_info'] = get_user_info_by_key(">认证:",basic_info)
     else:
         user_info['is_verified'] = '0'
-    user_info['gender'] = get_user_info_by_key(">性别:",info)
-    user_info['location'] = get_user_info_by_key(">地区:",info)
-    user_info['birthday'] = get_user_info_by_key(">生日:",info)
-    user_info['description'] = get_user_info_by_key(">简介:",info)
-    user_info['tag'] = get_user_tags(user_info['idusers'],info)
-    user_info['ei'] = get_user_education(info)
-    user_info['ci'] = get_user_career(info)
+    user_info['gender'] = get_user_info_by_key(">性别:", basic_info)
+    user_info['location'] = get_user_info_by_key(">地区:", basic_info)
+    user_info['birthday'] = get_user_info_by_key(">生日:", basic_info)
+    user_info['description'] = get_user_info_by_key(">简介:", basic_info)
+    user_info['tag'] = get_user_tags(user_info['idusers'], basic_info_soup, headers, opener, logger)
+    #get the edu_info and career_info html soup from the html
+    edu_info_soup, career_info_soup = get_user_edu_career_html(tip_div_list)
+    user_info['ei'] = get_user_education(edu_info_soup)
+    user_info['ci'] = get_user_career(career_info_soup)
     return user_info
+
+def get_user_edu_career_html(tip_div_list):
+    edu_info = ""
+    career_info = "" 
+    if 4 == len(tip_div_list):
+        edu_info = tip_div_list[1].find_next()
+        career_info = tip_div_list[2].find_next()
+    elif 3 == len(tip_div_list):
+        temp = str(tip_div_list[1].find_next())
+        if -1 != temp.find("学习经历"):
+            edu_info = tip_div_list[1].find_next()
+        else:
+            career_info = tip_div_list[1].find_next()
+        print 'missing one info'
+    else:
+        print 'just basic info'
+    return edu_info, career_info
+
 
 def get_user_info_by_key(key, info):
     """
@@ -88,43 +132,84 @@ def get_user_info_by_key(key, info):
         print info[start_index:end_index]
         return info[start_index:end_index]
     except:
+        print "no such: ", key
         return ""
 
-def get_user_tags(user_id, info):
+def get_user_tags(user_id, basic_info_soup, headers, opener, logger):
     """
     get_user_tags may have more(更多),
     so we have to request for another time to get all the tags
     """
     tags = ""
-    if -1 == info.find('account/privacy/tags/'):
+    basic_info_str = str(basic_info_soup)
+    if -1 == basic_info_str.find('account/privacy/tags/'):
         # means that just parse this page to get the tags will be fine
-        tags = get_current_tags(info)
+        tags = get_current_tags(basic_info_soup, logger)
     else:
         # means that we have to get another page to get all the tags
-        tags = get_more_tags(info)
+        tags = get_more_tags(user_id, headers, opener, logger)
     print tags
     return tags
 
-def get_current_tags(info):
+def get_current_tags(basic_info_soup, logger):
     """
     just parse one page which is the user info page to get the tags
     """
     tags = "no"
+    try:
+        tags = ""
+        tag_soup_a_list = basic_info_soup.find_all('a')
+        for a in tag_soup_a_list:
+            tags = tags + a.string+','
+        tags = tags[:-1]
+    except:
+        logger.error("something is wrong with the tags..maybe it has no tags'>")
+        tags = ""
     return tags
 
-def get_more_tags(info):
+def get_more_tags(user_id, headers, opener, logger):
     """
     will visit the /account/privacy/tags/***** page to get all the tags
     """
-    tags = "more"
+    to_visit_url = "http://weibo.cn/account/privacy/tags/?uid=" + str(user_id)
+    req = urllib2.Request(url = to_visit_url, headers=headers)
+    try:
+        response = opener.open(req)
+        html_str = response.read()
+        soup = BeautifulSoup(html_str)
+        class_c_list = soup.find_all('div', class_='c')
+        try:
+            tags = ""
+            tag_soup = class_c_list[2]
+            tag_soup_a_list = tag_soup.find_all('a')
+            for a in tag_soup_a_list:
+                tags = tags + a.string+','
+            tags = tags[:-1]
+        except:
+            logger.error("index out of bound...less than 3 <div class='c'>")
+            tags = ""
+        response.close()
+    except URLError, e:
+        if hasattr(e, 'reason'):
+            logger.error("http url error reason: %s" % e.reason)
+        elif hasattr(e, 'code'):
+            logger.error("http url error code: %s" % e.code)
     return tags
 
 def get_user_education(info):
     """
     will get users education info
     """
-    ei = ""
-    #TODO   
+    if "" == info:
+        return "NULL"
+    ei_list = info.findAll(text=True)
+    new_ei_list = []
+    # the reason here is that we have an annoying little point before each line
+    # so I have to remove the first char which is the little point of each line
+    for ei in ei_list:
+        ei = ei[1:]
+        new_ei_list.append(ei)
+    ei = "\n".join(new_ei_list)
     print ei
     return ei
 
@@ -132,14 +217,95 @@ def get_user_career(info):
     """
     will get users career info
     """
-    ci = ""
-    #TODO   
+    if "" == info:
+        return "NULL"
+    ci_list = info.findAll(text=True)
+    new_ci_list = []
+    # the reason here is that we have an annoying little point before each line
+    # so I have to remove the first char which is the little point of each line
+    for ci in ci_list:
+        ci = ci[1:]
+        new_ci_list.append(ci)
+    ci = "\n".join(new_ci_list)
     print ci
     return ci
 
+
+def get_following_url_list(following_page, page_num, total_page_num,  headers, opener, logger):
+    """
+    will return a list containing the fake urls(****)
+    these fake urls are the url of the followings
+        for example:
+            following_url = "http://weibo.cn" + ***
+            here *** can be /user_id(12345) or user_name(swarm)
+            and *** is the fake user_url and is extracted from the following page
+    """
+    following_url_list = []
+    try:
+        following_soup = BeautifulSoup(following_page)
+        table_soup_list = following_soup.find_all('table')
+        for table_soup in table_soup_list:
+            href_str = str(table_soup.find_all('a')[0]['href'])
+            if '/u/' in href_str:
+                following_url = href_str[3:]
+            else:
+                following_url = href_str[1:]
+            print following_url
+            following_url_list.append(following_url)
+        pagelist_div = following_soup.select('div[id="pagelist"]')[0]
+        pagelist_div_div = pagelist_div.find_all('div')[0]
+        pagelist_div_div_str = str(pagelist_div_div)
+    except:
+        logger.error("maybe speed is too fast..")
+        file = open('error.html','w')
+        file.write(following_page)
+        file.close()
+        return following_url_list
+    # if now is the first page of user followings
+    # will need to get the total num of pages and the next page url
+    if 1 == page_num:
+        # number of pages of the following users
+        # this part is so dirty ...just to get the togal number of pages
+        try:
+            start_index = pagelist_div_div_str.index('1/') + len('1/')
+            end_index = start_index + pagelist_div_div_str[start_index:].index("页")
+            total_page_num = int(pagelist_div_div_str[start_index:end_index])
+        except:
+            logger.error("Error:...pagelist: total_page_num")
+            total_page_num = 1
+        print total_page_num
+    # if this is still not the last page
+    # then need to visit the next page and then get followings urls again...(recursively)
+    if page_num < total_page_num:
+        to_visit_url = ""
+        try:
+            to_visit_url = "http://weibo.cn" + pagelist_div_div.find_all('a')[0]['href']
+        except:
+            logger.error("Error:...pagelist: to_visit_url(meaning next page url)")
+            to_visit_url = ""
+        print to_visit_url
+        req = urllib2.Request(url = to_visit_url, headers=headers)
+        page_num = page_num + 1
+        try:
+            response = opener.open(req)
+            html_str = response.read()
+            following_url_list = following_url_list \
+                    + get_following_url_list(html_str, page_num, total_page_num, headers, opener, logger)
+            response.close()
+        except URLError, e:
+            if hasattr(e, 'reason'):
+                logger.error("http url error reason: %s" % e.reason)
+            elif hasattr(e, 'code'):
+                logger.error("http url error code: %s" % e.code)
+    print 'len of list: ', len(following_url_list)
+    return following_url_list
+
+
+
 if __name__ == '__main__':
-    info = open('test.html','r')
+    info_file = 'test.html'
+    info = open(info_file,'r')
     info_str = info.read()
-    print parse_user_info(info_str)['screen_name']
+    #print parse_user_info(info_str)['screen_name']
     info.close()
 
