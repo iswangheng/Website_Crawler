@@ -11,6 +11,7 @@ import codecs
 import time
 from urllib2 import Request, build_opener, urlopen, HTTPCookieProcessor, HTTPHandler, URLError, HTTPError
 import sys
+import parse
 
 
 class Login:
@@ -81,7 +82,6 @@ class Login:
         else:
             random_num = '0000'
         return random_num
-
 
     def get_vk_by_randomNum(self,random_num, txt):
         """
@@ -183,7 +183,7 @@ class Login:
         try:
             response = self.opener.open(req)
             html = response.read()
-            #update the cookies, this time my add _WEIBO_UID
+            #update the cookies, this time add _WEIBO_UID
             for cookie in self.cj:
                 self.cookie_dict[cookie.name] = cookie.value
             response.close()
@@ -210,24 +210,27 @@ class Login:
         headers = {
                 'User-Agent': self.config.get('crawler','User-Agent'),
                 'Cookie': cookie_str}
-        #headers = {'User-Agent': self.config.get('crawler','User-Agent')}
         to_visit_url = 'http://weibo.cn/1644798402/info'
         req = urllib2.Request(url = to_visit_url, headers=headers)
-        try:
-            response = self.opener.open(req)
-            html = response.read()
-            response.close()
-        except URLError, e:
-            if hasattr(e, 'reason'):
-                self.logger.error("http url error reason: %s" % e.reason)
-            elif hasattr(e, 'code'):
-                self.logger.error("http url error code: %s" % e.code)
-            html = 'ERROR' 
-            # TODO you need to think calfully how to deal with this login error here
-        finally:
-            file = open('test.html','w')
-            file.write(html)
-            file.close()
+        while 1:  # for test only
+            try:
+                response = self.opener.open(req)
+                html = response.read()
+                parse.parse_user_info(html, headers, self.opener, self.logger)
+                response.close()
+            except URLError, e:
+                if hasattr(e, 'code'):
+                    self.logger.error("http url error code: %s" % e.code)
+                    if hasattr(e, 'reason'):
+                        self.logger.error("http url error reason: %s" % e.reason)
+                    file = open('test.html','w')
+                    file.write(html)
+                    file.close()
+                    # will sleep for how many seconds...
+                    sleep_time = 12 * 60
+                    print 'will sleep for %d seconds' % sleep_time
+                    time.sleep(sleep_time)
+
 
 if __name__ == '__main__':
     login = Login()

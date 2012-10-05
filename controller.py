@@ -28,7 +28,6 @@ class Controller:
         self.cookie_str = ""
         self.opener = self.login_instance.opener
 
-
     def get_user_info(self, headers, user_url):
         user_home = {}
         user_info = {}
@@ -71,7 +70,6 @@ class Controller:
                 self.logger.error("http url error code: %s" % e.code)
         # TODO store the user_home(numbers) and user_info into database
 
-
     def get_user_following(self, headers, user_id):
         """
         # will get all the user following urls and then get the user info one by one
@@ -97,8 +95,6 @@ class Controller:
         for following_url in user_following_url_list:
             self.get_user_info(headers, following_url)
 
-
-
     def start_crawler(self):
         """start_crawler function is the entry main func
            will start the crawler
@@ -115,7 +111,6 @@ class Controller:
                 'Cookie': cookie_str}
         #self.get_user_info(headers, '2041028560')
         self.get_user_following(headers, user_id='1693298840')
-
 
 
 if __name__ == '__main__':

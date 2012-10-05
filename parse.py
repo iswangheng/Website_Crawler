@@ -55,7 +55,7 @@ def parse_user_info(info, headers, opener, logger):
     and then get all the users info,
     would return a dict
     """
-    user_info = {'idusers':'', 'username':'', 'screen_name':'',
+    user_info = {'username':'', 'screen_name':'',
                  'gender':'', 'location':'', 'description':'',
                  'profile_image_url':'', 'is_verified':'', 'is_daren':'',
                  'verify_info':'', 'tag':'', 'education_info':'',
@@ -68,12 +68,6 @@ def parse_user_info(info, headers, opener, logger):
         profile_img_start_index = img_part.rindex('src="') + len('src="')
         profile_img_end_index = profile_img_start_index + img_part[profile_img_start_index:].index('"')
         user_info['profile_image_url'] = img_part[profile_img_start_index:profile_img_end_index]
-        #if using soup, sentence below should be comment
-        #info = info[img_part_end_index:]
-        start_index = info.index('?uid=') + len('?uid=')
-        end_index = start_index + info[start_index:].index('"')
-        print info[start_index:end_index]
-        user_info['idusers'] = info[start_index:end_index]
     except:
         user_info['profile_image_url'] = ""
     try:
@@ -83,7 +77,9 @@ def parse_user_info(info, headers, opener, logger):
         basic_info = str(basic_info_soup)
     except:
         logger.error("seems to be the html has no such class, maybe speed is too fast")
-        logger.info(info)
+        file = open('speed_too_fast.html', 'w')
+        file.write(info)
+        file.close()
         sys.exit(1)
         return user_info
     user_info['screen_name'] = get_user_info_by_key(">昵称:",basic_info)
@@ -119,7 +115,6 @@ def get_user_edu_career_html(tip_div_list):
     else:
         print 'just basic info'
     return edu_info, career_info
-
 
 def get_user_info_by_key(key, info):
     """
@@ -229,7 +224,6 @@ def get_user_career(info):
     ci = "\n".join(new_ci_list)
     print ci
     return ci
-
 
 def get_following_url_list(following_page, page_num, total_page_num,  headers, opener, logger):
     """
