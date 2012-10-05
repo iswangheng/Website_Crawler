@@ -16,7 +16,6 @@ from bs4 import BeautifulStoneSoup
 
 """
 This module is very very very very DIRTY
-coz I do not use any HTMLParser here and 
 I just wrote for weibo.cn ONLY
 SORRY for those DIRTY codes.......so sorry :)
 """
