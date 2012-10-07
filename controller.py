@@ -1,18 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from ConfigParser import ConfigParser
-import re
-import os
-import logging
-import urllib
 import urllib2
-import cookielib
-import codecs
 import time
 import datetime
-from urllib2 import Request, build_opener, urlopen, HTTPCookieProcessor, HTTPHandler, URLError, HTTPError
-import sys
 import orm
+from urllib2 import URLError
 
 from login import Login
 import parse
@@ -116,6 +108,7 @@ class Controller:
         user_id = 0
         username = user_id
         is_stored = 0
+        is_banned = False
         if 'u/' in user_url:
             # means that u/***, *** is a number namely user_id
             user_url = user_url[2:]
@@ -129,12 +122,12 @@ class Controller:
         # else go on and get the user info
         if user_id == 0:  # if still not get the user_id
             is_stored = self.is_stored_username(username)
-            user_id = self.get_userid_by_username(username)
         else:   # already have the user_id
             is_stored = self.is_stored_user(user_id)
         if is_stored:
+            user_id = self.get_userid_by_username(username)
             print '%s has been stored already' % user_id
-            return user_id
+            return is_banned, user_id
         else:  # if a new user, add it to db
             to_visit_url = 'http://weibo.cn/' + str(user_url)
             req = urllib2.Request(url = to_visit_url, headers=headers)
@@ -142,23 +135,30 @@ class Controller:
             try:
                 response = self.opener.open(req)
                 html = response.read()
+                if parse.is_pub_page(html):
+                    is_banned = True
+                    return is_banned, user_id
                 user_home = parse.parse_user_home(html)
                 print user_home
                 user_id = user_home['user_id']
                 response.close()
             except URLError, e:
                 user_id = 0
+                is_banned = True
                 if hasattr(e, 'code'):
                     self.logger.error("http url error code: %s" % e.code)
                     if hasattr(e, 'reason'):
                         self.logger.error("http url error reason: %s" % e.reason)
-                return user_id
+                return is_banned, user_id
             to_visit_url = 'http://weibo.cn/' + str(user_id) + "/info"
             req = urllib2.Request(url = to_visit_url, headers=headers)
             # to get the user info
             try:
                 response = self.opener.open(req)
                 html_str = response.read()
+                if parse.is_pub_page(html_str):
+                    is_banned = True
+                    return is_banned, user_id
                 user_info = parse.parse_user_info(str(html_str), user_id, headers, self.opener, self.logger)
                 response.close()
                 # store the user_home(u know, those numbers) and user_info into database
@@ -169,7 +169,7 @@ class Controller:
                     self.logger.error("http url error code: %s" % e.code)
                     if hasattr(e, 'reason'):
                         self.logger.error("http url error reason: %s" % e.reason)
-        return user_id
+        return is_banned, user_id
 
     def get_user_following(self, headers, user_id):
         """
@@ -181,6 +181,11 @@ class Controller:
         try:
             response = self.opener.open(req)
             html = response.read()
+            # if is the pub page, means too fast.. have been detected and banned by sina
+            if parse.is_pub_page(html):
+                self.logger.error("BANNED by sina, coz is_pub_page..")
+                print "BANNED by sina, coz is_pub_page..sleep for 20 mins.."
+                return False
             user_following_url_list = parse.get_following_url_list(html,
                     page_num=1, total_page_num=111,headers=headers, 
                     opener = self.opener, logger=self.logger)
@@ -195,10 +200,17 @@ class Controller:
         following_id_list = []
         for following_url in user_following_url_list:
             # will get and store the followings user info
-            following_id_list.append(self.get_user_info(headers, following_url))
+            is_banned, following_id = self.get_user_info(headers, following_url)
+            if is_banned:
+                self.logger.error("BANNED by sina again..is_pub_page. from get_user_info()")
+                print 'banned...sleep for 1800 seconds...'
+                time.sleep(1800)
+            else:
+                following_id_list.append(following_id)
         for following_id in following_id_list:
             print following_id
             #self.store_follow_into_db(user_id, following_id)
+        return True
 
 
     def start_crawler(self):
@@ -220,8 +232,10 @@ class Controller:
         while 1:
             to_visit_list = self.fill_to_visit_list()
             for user_id in to_visit_list:
-                self.get_user_following(headers, user_id)
-                self.update_user_is_visited(user_id)
+                if self.get_user_following(headers, user_id):
+                    self.update_user_is_visited(user_id)
+                else:
+                    time.sleep(1200)
                 time.sleep(10)
 
 

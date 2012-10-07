@@ -7,10 +7,8 @@ import logging
 import urllib
 import urllib2
 import cookielib
-import codecs
+from urllib2 import build_opener, HTTPCookieProcessor, HTTPHandler, URLError
 import time
-from urllib2 import Request, build_opener, urlopen, HTTPCookieProcessor, HTTPHandler, URLError, HTTPError
-import sys
 import parse
 
 
@@ -199,8 +197,8 @@ class Login:
 
 
     def start_testing(self):
-        """start_crawler function is the entry main func
-           will start the crawler
+        """start_testing function will only be used to test
+            the login part
         """
         self.login_weibo()
         cookie_str = self.config.get('crawler','user_token') + '=' + self.cookie_dict[self.config.get('crawler','user_token')] \

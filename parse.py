@@ -1,17 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from ConfigParser import ConfigParser
 import re
-import os
-import logging
 import time
-import sys
 import urllib2
-from urllib2 import Request, build_opener, urlopen, HTTPCookieProcessor, HTTPHandler, URLError, HTTPError
-
-
 from bs4 import BeautifulSoup
-from bs4 import BeautifulStoneSoup
+from urllib2 import URLError 
 
 
 """
@@ -19,6 +12,18 @@ This module is very very very very DIRTY
 I just wrote for weibo.cn ONLY
 SORRY for those DIRTY codes.......so sorry :)
 """
+
+def is_pub_page(html):
+    """
+    just to check whether this page the pub page,
+     which also means the crawler may have been detected by sina....
+      so, the crawler needs to stop for a while?
+    """
+    soup = BeautifulSoup(html)
+    if soup.title.string == u"微博广场":
+        return True
+    else:
+        return False
 
 def parse_user_home(home):
     """
@@ -304,9 +309,11 @@ def get_following_url_list(following_page, page_num, total_page_num,  headers, o
 
 
 if __name__ == '__main__':
-    info_file = 'test.html'
+    info_file = 'pub.html'
     info = open(info_file,'r')
     info_str = info.read()
+    if is_pub_page(info_str):
+        print "is pub"
     #print parse_user_info(info_str)['screen_name']
     info.close()
 
