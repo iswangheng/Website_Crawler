@@ -48,14 +48,14 @@ def parse_user_home(home):
         user_home = {'user_id':'', 'followings_count':'', 'followers_count':'', 'statuses_count':''}
     return user_home
 
-def parse_user_info(info, headers, opener, logger):
+def parse_user_info(info, user_id, headers, opener, logger):
     """
     this function will take the user_info.wml as input
     and then get all the users info,
     would return a dict
     """
-    user_info = {'username':'', 'screen_name':'',
-                 'gender':'', 'location':'', 'description':'',
+    user_info = {'screen_name':'',
+                 'gender':'', 'location':'', 'birthday':'', 'description':'',
                  'profile_image_url':'', 'is_verified':'', 'is_daren':'',
                  'verify_info':'', 'tag':'', 'education_info':'',
                  'career_info':''} 
@@ -75,11 +75,14 @@ def parse_user_info(info, headers, opener, logger):
         basic_info_soup = tip_div_list[0].find_next()
         basic_info = str(basic_info_soup)
     except:
-        logger.error("seems to be the html has no such class, maybe speed is too fast")
-        file = open('speed_too_fast.html', 'w')
+        logger.error("looks like the info page html has no such class, maybe speed is too fast")
+        logger.info("will now sleep for 20 mins")
+        file = open('infopage_speed_too_fast.html', 'w')
         file.write(info)
         file.close()
-        sys.exit(1)
+        print "will now sleep for 20 mins"
+        sleep_time = 20 * 60
+        time.sleep(sleep_time)
         return user_info
     user_info['screen_name'] = get_user_info_by_key(">昵称:",basic_info)
     if -1 != basic_info.find('>认证:'):
@@ -87,11 +90,15 @@ def parse_user_info(info, headers, opener, logger):
         user_info['verify_info'] = get_user_info_by_key(">认证:",basic_info)
     else:
         user_info['is_verified'] = '0'
+    if -1 != basic_info.find('>达人:'):
+        user_info['is_daren'] = '1'
+    else:
+        user_info['is_daren'] = '0'
     user_info['gender'] = get_user_info_by_key(">性别:", basic_info)
     user_info['location'] = get_user_info_by_key(">地区:", basic_info)
     user_info['birthday'] = get_user_info_by_key(">生日:", basic_info)
     user_info['description'] = get_user_info_by_key(">简介:", basic_info)
-    user_info['tag'] = get_user_tags(user_info['idusers'], basic_info_soup, headers, opener, logger)
+    user_info['tag'] = get_user_tags(user_id, basic_info_soup, headers, opener, logger)
     #get the edu_info and career_info html soup from the html
     edu_info_soup, career_info_soup = get_user_edu_career_html(tip_div_list)
     user_info['ei'] = get_user_education(edu_info_soup)
@@ -239,20 +246,21 @@ def get_following_url_list(following_page, page_num, total_page_num,  headers, o
         table_soup_list = following_soup.find_all('table')
         for table_soup in table_soup_list:
             href_str = str(table_soup.find_all('a')[0]['href'])
+            """
+            # now this part has been moved to controller.py, just to get the username from url
             if '/u/' in href_str:
                 following_url = href_str[3:]
             else:
                 following_url = href_str[1:]
+            """
+            following_url = href_str[1:]
             print following_url
             following_url_list.append(following_url)
         pagelist_div = following_soup.select('div[id="pagelist"]')[0]
         pagelist_div_div = pagelist_div.find_all('div')[0]
         pagelist_div_div_str = str(pagelist_div_div)
     except:
-        logger.error("maybe speed is too fast..")
-        file = open('error.html','w')
-        file.write(following_page)
-        file.close()
+        logger.error("pagelist div NOT FOUND..maybe 0 followings or speed is too fast..")
         return following_url_list
     # if now is the first page of user followings
     # will need to get the total num of pages and the next page url
@@ -286,10 +294,10 @@ def get_following_url_list(following_page, page_num, total_page_num,  headers, o
                     + get_following_url_list(html_str, page_num, total_page_num, headers, opener, logger)
             response.close()
         except URLError, e:
-            if hasattr(e, 'reason'):
-                logger.error("http url error reason: %s" % e.reason)
-            elif hasattr(e, 'code'):
+            if hasattr(e, 'code'):
                 logger.error("http url error code: %s" % e.code)
+                if hasattr(e, 'reason'):
+                    logger.error("http url error reason: %s" % e.reason)
     print 'len of list: ', len(following_url_list)
     return following_url_list
 

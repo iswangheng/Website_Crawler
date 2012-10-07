@@ -1,0 +1,22 @@
+2012-10-07 21:13:00,050 INFO the Login module has finished login
+2012-10-07 21:13:00,051 INFO OKAY, this info is from controller class
+2012-10-07 21:13:00,427 ERROR pagelist div NOT FOUND..maybe 0 followings or speed is too fast..
+2012-10-07 21:13:01,169 ERROR query.filter(orm.Users.username == xirarongbo).first().idusers
+2012-10-07 21:13:02,691 ERROR query.filter(orm.Users.username == ithinkwhat).first().idusers
+2012-10-07 21:13:03,799 ERROR pagelist div NOT FOUND..maybe 0 followings or speed is too fast..
+2012-10-07 21:13:04,578 ERROR query.filter(orm.Users.username == xirarongbo).first().idusers
+2012-10-07 21:13:06,090 ERROR query.filter(orm.Users.username == dazuo).first().idusers
+2012-10-07 21:13:17,336 ERROR pagelist div NOT FOUND..maybe 0 followings or speed is too fast..
+2012-10-07 21:13:18,122 ERROR query.filter(orm.Users.username == xirarongbo).first().idusers
+2012-10-07 21:13:19,672 ERROR query.filter(orm.Users.username == luchenmagic).first().idusers
+2012-10-07 21:13:30,854 ERROR pagelist div NOT FOUND..maybe 0 followings or speed is too fast..
+2012-10-07 21:13:31,600 ERROR query.filter(orm.Users.username == xirarongbo).first().idusers
+2012-10-07 21:13:32,344 ERROR query.filter(orm.Users.username == fangzuming).first().idusers
+2012-10-07 21:13:33,053 ERROR query.filter(orm.Users.username == chenhe09).first().idusers
+2012-10-07 21:16:18,772 INFO the Login module has finished login
+2012-10-07 21:16:18,772 INFO OKAY, this info is from controller class
+2012-10-07 21:16:19,194 ERROR pagelist div NOT FOUND..maybe 0 followings or speed is too fast..
+2012-10-07 21:16:19,985 ERROR query.filter(orm.Users.username == naying).first().idusers
+2012-10-07 21:16:20,773 ERROR query.filter(orm.Users.username == chenhe09).first().idusers
+2012-10-07 21:16:21,509 ERROR query.filter(orm.Users.username == dazuo).first().idusers
+2012-10-07 21:16:22,624 ERROR pagelist div NOT FOUND..maybe 0 followings or speed is too fast..

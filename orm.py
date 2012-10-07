@@ -20,9 +20,9 @@ host = config.get('database','host')
 user = config.get('database','user')
 passwd = config.get('database','passwd')
 db = config.get('database','db')
-engine_str = "mysql://%s:%s@%s/%s" % (user, passwd, host, db)
+engine_str = "mysql://%s:%s@%s/%s?charset=utf8" % (user, passwd, host, db)
 
-engine = create_engine(engine_str, echo=False)
+engine = create_engine(engine_str, encoding="utf8", convert_unicode=True, echo=False)
 Base = declarative_base(engine)
 
 def set_dblogger():
@@ -55,11 +55,12 @@ class Users(Base):
     career_info = Column(VARCHAR)
     create_time = Column(DATETIME)
     birthday = Column(VARCHAR)
+    is_visited = Column(TINYINT)
 
     def __init__(self, idusers, username, screen_name, gender, location,
                  description, profile_image_url, followings_count, followers_count,
                  statuses_count, is_verified, is_daren, verify_info, insert_time,
-                 tag, education_info, career_info, create_time, birthday):
+                 tag, education_info, career_info, create_time, birthday, is_visited):
         self.idusers = idusers
         self.username = username
         self.screen_name = screen_name
@@ -79,6 +80,7 @@ class Users(Base):
         self.career_info = career_info
         self.create_time = create_time
         self.birthday = birthday
+        self.is_visited = is_visited
 
     def __repr__(self):
         """
@@ -86,10 +88,10 @@ class Users(Base):
         """
         return "<User- '%s' - '%s'- '%s' - '%s'- '%s' - '%s' \
                 - '%s' - '%s'- '%s' - '%s'- '%s' - '%s'- '%s' - '%s' \
-                - '%s' - '%s'- '%s' - '%s'- '%s'>" % (self.idusers, self.username, self.screen_name,
+                - '%s' - '%s'- '%s' - '%s'- '%s'- '%s'>" % (self.idusers, self.username, self.screen_name,
                 self.gender, self.location, self.description, self.profile_image_url, self.followings_count,
                 self.followers_count, self.statuses_count, self.is_verified, self.is_daren, self.verify_info,
-                self.insert_time, self.tag, self.education_info, self.career_info, self.create_time, self.birthday)
+                self.insert_time, self.tag, self.education_info, self.career_info, self.create_time, self.birthday, self.is_visited)
 
 class Follow(Base):
     __tablename__ = 'follow'
@@ -104,7 +106,7 @@ class Follow(Base):
     def __repr__(self):
         return "<Follow- '%s' -> '%s'>" % (self.user_id, self.following_id)
 
-def loadSession():
+def load_session():
     """
     """
     metadata = Base.metadata
@@ -114,15 +116,18 @@ def loadSession():
 
 if __name__ == "__main__":
     set_dblogger()
-    session = loadSession()
+    session = load_session()
     """
     ad_user = Users(idusers=1, username='test', screen_name="test", gender="male",
                     location='hk', description='test', profile_image_url='http://wew.as.com/a/asdf/asdf.jpg', followings_count=12, followers_count=124,
                     statuses_count=12, is_verified=1, is_daren=0, verify_info="12",
                     insert_time="2012-08-09 11:11:11", tag="tagsd", 
                     education_info='ei', career_info='ci', create_time='', 
-                    birthday='122-1')
+                    birthday='122-1', is_visited='0')
     print ad_user
     session.add(ad_user)
     """
+    query = session.query(Users)
+    count = query.filter(Users.idusers == "2407207504").count()
+    print count
     session.commit()
