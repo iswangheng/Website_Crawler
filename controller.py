@@ -236,7 +236,7 @@ class Controller:
         print "has finished stored all the following users of %s" % str(user_id)
         for following_id in following_id_list:
             print "%s ---> %s" % (str(user_id), str(following_id))
-            #self.store_follow_into_db(user_id, following_id)
+            self.store_follow_into_db(user_id, following_id)
         return True
 
 
