@@ -56,11 +56,14 @@ class Users(Base):
     create_time = Column(DATETIME)
     birthday = Column(VARCHAR)
     is_visited = Column(TINYINT)
+    is_picked = Column(TINYINT)
+    pick_time = Column(DATETIME)
 
     def __init__(self, idusers, username, screen_name, gender, location,
                  description, profile_image_url, followings_count, followers_count,
                  statuses_count, is_verified, is_daren, verify_info, insert_time,
-                 tag, education_info, career_info, create_time, birthday, is_visited):
+                 tag, education_info, career_info, create_time, birthday, is_visited,
+                 is_picked, pick_time):
         self.idusers = idusers
         self.username = username
         self.screen_name = screen_name
@@ -81,6 +84,8 @@ class Users(Base):
         self.create_time = create_time
         self.birthday = birthday
         self.is_visited = is_visited
+        self.is_picked = is_picked
+        self.pick_time = pick_time
 
     def __repr__(self):
         """
@@ -95,9 +100,8 @@ class Users(Base):
 
 class Follow(Base):
     __tablename__ = 'follow'
-    idfollow = Column(BIGINT, primary_key = True)
-    user_id = Column(BIGINT)
-    following_id = Column(BIGINT)
+    user_id = Column(BIGINT, primary_key = True)
+    following_id = Column(BIGINT, primary_key = True)
 
     def __init__(self, user_id, following_id):
         self.user_id = user_id
@@ -117,16 +121,6 @@ def load_session():
 if __name__ == "__main__":
     set_dblogger()
     session = load_session()
-    """
-    ad_user = Users(idusers=1, username='test', screen_name="test", gender="male",
-                    location='hk', description='test', profile_image_url='http://wew.as.com/a/asdf/asdf.jpg', followings_count=12, followers_count=124,
-                    statuses_count=12, is_verified=1, is_daren=0, verify_info="12",
-                    insert_time="2012-08-09 11:11:11", tag="tagsd", 
-                    education_info='ei', career_info='ci', create_time='', 
-                    birthday='122-1', is_visited='0')
-    print ad_user
-    session.add(ad_user)
-    """
     query = session.query(Users)
     count = query.filter(Users.idusers == "2407207504").count()
     print count

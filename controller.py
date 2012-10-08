@@ -77,7 +77,8 @@ class Controller:
                    is_daren=user_info['is_daren'], verify_info=user_info['verify_info'],
                    insert_time=insert_time, tag=user_info['tag'],
                    education_info=user_info['education_info'], career_info=user_info['career_info'],
-                   create_time = "2000-01-01 00:00:00", birthday=user_info['birthday'], is_visited='0')
+                   create_time = "2000-01-01 00:00:00", birthday=user_info['birthday'], is_visited='0',
+                   is_picked='0', pick_time="2000-01-01 00:00:00")
         self.session.add(add_user)
         self.session.commit()
 
@@ -98,23 +99,31 @@ class Controller:
         """
         store the user following relationship into the follow table
         """
-        add_follow = orm.Follow(user_id=user_id, following_id=following_id)
-        self.session.add(add_follow)
-        self.session.commit()
+        try:
+            add_follow = orm.Follow(user_id=user_id, following_id=following_id)
+            self.session.add(add_follow)
+            self.session.commit()
+        except:
+            self.logger.error("duplicate key entry..has stored this relationship before..")
 
     def fill_to_visit_list(self):
         """
-        will query the db and return a to_visit_list with length of 100
+        will query the db and return a to_visit_list with length of 1
+        just 1 element....(because this is for multiple machines)
         """
         to_visit_list = []
         try:
             query = self.session.query(orm.Users)
-            users = query.filter(orm.Users.is_visited == 0).limit(100)
+            users = query.filter(orm.Users.is_visited == 0).filter(orm.Users.is_picked == 0).limit(1)
             for user in users:
                 to_visit_list.append(user.idusers)
+                pick_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                self.session.query(orm.Users).filter(orm.Users.idusers == user.idusers).update(
+                        {'is_picked': 1, 'pick_time':pick_time})
+                self.session.commit()
         except:
             self.logger.error("fill_to_visit_list...")
-            to_visit_list = self.fill_to_visit_list()
+            to_visit_list = []
         return to_visit_list
 
     def get_user_info(self, headers, user_url):
@@ -179,7 +188,7 @@ class Controller:
                 # store the user_home(u know, those numbers) and user_info into database
                 if user_info['screen_name'] != '':
                     self.store_user_into_db(user_home, user_info, username)
-                time_sleep = random.randint(5,10)
+                time_sleep = random.randint(12,23)
                 print "after requesting the user info, sleep for %s secs" % str(time_sleep)
                 time.sleep(time_sleep)
             except URLError, e:
@@ -202,7 +211,7 @@ class Controller:
             # if is the pub page, means too fast.. have been detected and banned by sina
             if parse.is_pub_page(html):
                 self.logger.error("BANNED by sina, coz is_pub_page..")
-                print "BANNED by sina, coz is_pub_page..sleep for 20 mins.."
+                print "BANNED by sina, coz is_pub_page..sleep for 40 mins.."
                 return False
             user_following_url_list = parse.get_following_url_list(user_id, html,
                     page_num=1, total_page_num=111,headers=headers, 
@@ -220,7 +229,7 @@ class Controller:
             is_banned, following_id = self.get_user_info(headers, following_url)
             if is_banned:
                 self.logger.error("BANNED by sina again..is_pub_page. from get_user_info()")
-                print 'banned...sleep for 2400 seconds...'
+                print 'banned...sleep for 2400 seconds(namely, 40mins)...'
                 time.sleep(2400)
             else:
                 following_id_list.append(following_id)
@@ -263,11 +272,12 @@ class Controller:
                     if self.get_user_following(headers, user_id):
                         self.update_user_is_visited(user_id)
                     else:
-                        time.sleep(5)
+                        # banned by sina...sleep for a long time...
+                        time.sleep(2400)
                 else:
                     print "following count of %s is 0.." % str(user_id)
                     self.update_user_is_visited(user_id)
-                time_sleep = random.randint(4,20)
+                time_sleep = random.randint(10,20)
                 print 'finished store_one_followingUser, will sleep for %s secs' % str(time_sleep)
                 time.sleep(time_sleep)
 

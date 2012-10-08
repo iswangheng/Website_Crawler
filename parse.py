@@ -105,8 +105,8 @@ def parse_user_info(info, user_id, headers, opener, logger):
     user_info['tag'] = get_user_tags(user_id, basic_info_soup, headers, opener, logger)
     #get the edu_info and career_info html soup from the html
     edu_info_soup, career_info_soup = get_user_edu_career_html(tip_div_list)
-    user_info['ei'] = get_user_education(edu_info_soup)
-    user_info['ci'] = get_user_career(career_info_soup)
+    user_info['education_info'] = get_user_education(edu_info_soup)
+    user_info['career_info'] = get_user_career(career_info_soup)
     return user_info
 
 def get_user_edu_career_html(tip_div_list):
@@ -123,7 +123,7 @@ def get_user_edu_career_html(tip_div_list):
             career_info = tip_div_list[1].find_next()
         print 'missing one info'
     else:
-        print 'just basic info, no ei or ci'
+        print 'just basic info, no education_info nor career_info'
     return edu_info, career_info
 
 def get_user_info_by_key(key, info):
@@ -248,6 +248,9 @@ def get_following_url_list(user_id, following_page, page_num, total_page_num,  h
     following_soup = BeautifulSoup(following_page)
     try:
         table_soup_list = following_soup.find_all('table')
+        if len(table_soup_list) == 0:
+            logger.info("%s maybe 0 followings or speed too fast.." % str(user_id))
+            return following_url_list
         for table_soup in table_soup_list:
             href_str = str(table_soup.find_all('a')[0]['href'])
             following_url = href_str[1:]
