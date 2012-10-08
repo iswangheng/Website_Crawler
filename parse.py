@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import re
 import time
+import random
 import urllib2
 from bs4 import BeautifulSoup
 from urllib2 import URLError 
@@ -36,7 +37,6 @@ def parse_user_home(home):
         home_soup = BeautifulSoup(home)
         user_info_html = home_soup.find_all(href=re.compile("/info"))[0]
         user_id_href_str = str(user_info_html['href'])
-        print user_id_href_str
         start_index = 1
         end_index = start_index + user_id_href_str[start_index:].index('/info')
         user_home['user_id'] = user_id_href_str[start_index:end_index]
@@ -81,13 +81,12 @@ def parse_user_info(info, user_id, headers, opener, logger):
         basic_info = str(basic_info_soup)
     except:
         logger.error("looks like the info page html has no such class, maybe speed is too fast")
-        logger.info("will now sleep for 20 mins")
-        file = open('infopage_speed_too_fast.html', 'w')
+        logger.info("will now sleep for 10 seconds")
+        file = open('infopage_error.html', 'w')
         file.write(info)
         file.close()
-        print "will now sleep for 20 mins"
-        sleep_time = 20 * 60
-        time.sleep(sleep_time)
+        print "infopage_error....."
+        time.sleep(10)
         return user_info
     user_info['screen_name'] = get_user_info_by_key(">昵称:",basic_info)
     if -1 != basic_info.find('>认证:'):
@@ -124,7 +123,7 @@ def get_user_edu_career_html(tip_div_list):
             career_info = tip_div_list[1].find_next()
         print 'missing one info'
     else:
-        print 'just basic info'
+        print 'just basic info, no ei or ci'
     return edu_info, career_info
 
 def get_user_info_by_key(key, info):
@@ -135,7 +134,7 @@ def get_user_info_by_key(key, info):
     try:
         start_index = info.index(key) + len(key)
         end_index = start_index + info[start_index:].index('<br')
-        print info[start_index:end_index]
+        print "%s %s" % (key, info[start_index:end_index])
         return info[start_index:end_index]
     except:
         print "no such: ", key
@@ -154,7 +153,7 @@ def get_user_tags(user_id, basic_info_soup, headers, opener, logger):
     else:
         # means that we have to get another page to get all the tags
         tags = get_more_tags(user_id, headers, opener, logger)
-    print tags
+    print "tags:", tags
     return tags
 
 def get_current_tags(basic_info_soup, logger):
@@ -216,7 +215,7 @@ def get_user_education(info):
         ei = ei[1:]
         new_ei_list.append(ei)
     ei = "\n".join(new_ei_list)
-    print ei
+    print "edu info: ",ei
     return ei
 
 def get_user_career(info):
@@ -233,10 +232,10 @@ def get_user_career(info):
         ci = ci[1:]
         new_ci_list.append(ci)
     ci = "\n".join(new_ci_list)
-    print ci
+    print "career info", ci
     return ci
 
-def get_following_url_list(following_page, page_num, total_page_num,  headers, opener, logger):
+def get_following_url_list(user_id, following_page, page_num, total_page_num,  headers, opener, logger):
     """
     will return a list containing the fake urls(****)
     these fake urls are the url of the followings
@@ -246,26 +245,24 @@ def get_following_url_list(following_page, page_num, total_page_num,  headers, o
             and *** is the fake user_url and is extracted from the following page
     """
     following_url_list = []
+    following_soup = BeautifulSoup(following_page)
     try:
-        following_soup = BeautifulSoup(following_page)
         table_soup_list = following_soup.find_all('table')
         for table_soup in table_soup_list:
             href_str = str(table_soup.find_all('a')[0]['href'])
-            """
-            # now this part has been moved to controller.py, just to get the username from url
-            if '/u/' in href_str:
-                following_url = href_str[3:]
-            else:
-                following_url = href_str[1:]
-            """
             following_url = href_str[1:]
-            print following_url
+            print "following url of current page", following_url
             following_url_list.append(following_url)
+    except:
+        logger.error("%s maybe 0 followings or speed too fast.." % str(user_id))
+        return following_url_list
+    try:
         pagelist_div = following_soup.select('div[id="pagelist"]')[0]
         pagelist_div_div = pagelist_div.find_all('div')[0]
         pagelist_div_div_str = str(pagelist_div_div)
     except:
-        logger.error("pagelist div NOT FOUND..maybe 0 followings or speed is too fast..")
+        logger.error("%s pagelist div NOT FOUND. maybe just a few(one page..) followings or speed too fast.." % str(user_id))
+        print 'len of list: ', len(following_url_list)
         return following_url_list
     # if now is the first page of user followings
     # will need to get the total num of pages and the next page url
@@ -277,9 +274,13 @@ def get_following_url_list(following_page, page_num, total_page_num,  headers, o
             end_index = start_index + pagelist_div_div_str[start_index:].index("页")
             total_page_num = int(pagelist_div_div_str[start_index:end_index])
         except:
-            logger.error("Error:...pagelist: total_page_num")
+            logger.error("Error:...when trying to get pagelist: total_page_num")
+            filename = "%s.html" % str(user_id)
+            file = open(filename, "w")
+            file.write(following_page)
+            file.close()
             total_page_num = 1
-        print total_page_num
+        print "total_page_num: ", total_page_num
     # if this is still not the last page
     # then need to visit the next page and then get followings urls again...(recursively)
     if page_num < total_page_num:
@@ -289,14 +290,17 @@ def get_following_url_list(following_page, page_num, total_page_num,  headers, o
         except:
             logger.error("Error:...pagelist: to_visit_url(meaning next page url)")
             to_visit_url = ""
-        print to_visit_url
+        print "next_page_url: ", to_visit_url
         req = urllib2.Request(url = to_visit_url, headers=headers)
         page_num = page_num + 1
         try:
             response = opener.open(req)
             html_str = response.read()
+            time_sleep = random.randint(2,3)
+            print "sleep for %s seconds" % (time_sleep)
+            time.sleep(time_sleep)
             following_url_list = following_url_list \
-                    + get_following_url_list(html_str, page_num, total_page_num, headers, opener, logger)
+                    + get_following_url_list(user_id, html_str, page_num, total_page_num, headers, opener, logger)
             response.close()
         except URLError, e:
             if hasattr(e, 'code'):

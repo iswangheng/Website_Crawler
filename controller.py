@@ -4,6 +4,7 @@ import urllib2
 import time
 import datetime
 import orm
+import random
 from urllib2 import URLError
 
 from login import Login
@@ -48,6 +49,19 @@ class Controller:
             user_id = 0
         return user_id
 
+    def get_followingscount_by_userid(self, user_id):
+        """
+        will query th db and get the followings_count by user_id
+        """
+        followings_count = 0
+        query = self.session.query(orm.Users.followings_count, orm.Users.idusers)
+        try:
+            user_id = query.filter(orm.Users.idusers == user_id).first().followings_count
+        except:
+            self.logger.error("query.filter(orm.Users.idusers == %s).first().followings_count" % user_id)
+            followings_count = 0
+        return followings_count
+
     def store_user_into_db(self, user_home, user_info, username):
         """
         store the user into the users table
@@ -76,6 +90,7 @@ class Controller:
             self.session.query(orm.Users).filter(orm.Users.idusers == user_id).update(
                     {'is_visited': 1})
             self.session.commit()
+            print "Now %s is set to be visited, namely is_visited=1" % str(user_id)
         except:
             self.logger.error("update is_visited error...user_id: %s" % user_id)
 
@@ -164,6 +179,9 @@ class Controller:
                 # store the user_home(u know, those numbers) and user_info into database
                 if user_info['screen_name'] != '':
                     self.store_user_into_db(user_home, user_info, username)
+                time_sleep = random.randint(5,10)
+                print "after requesting the user info, sleep for %s secs" % str(time_sleep)
+                time.sleep(time_sleep)
             except URLError, e:
                 if hasattr(e, 'code'):
                     self.logger.error("http url error code: %s" % e.code)
@@ -186,29 +204,29 @@ class Controller:
                 self.logger.error("BANNED by sina, coz is_pub_page..")
                 print "BANNED by sina, coz is_pub_page..sleep for 20 mins.."
                 return False
-            user_following_url_list = parse.get_following_url_list(html,
+            user_following_url_list = parse.get_following_url_list(user_id, html,
                     page_num=1, total_page_num=111,headers=headers, 
                     opener = self.opener, logger=self.logger)
-            print len(user_following_url_list)
+            print "In total %s has %s followings." % (str(user_id), str(len(user_following_url_list)))
             response.close()
         except URLError, e:
             if hasattr(e, 'code'):
                 self.logger.error("http url error code: %s" % e.code)
                 if hasattr(e, 'reason'):
                     self.logger.error("http url error reason: %s" % e.reason)
-            # TODO you need to think calfully how to deal with this login error here
         following_id_list = []
         for following_url in user_following_url_list:
             # will get and store the followings user info
             is_banned, following_id = self.get_user_info(headers, following_url)
             if is_banned:
                 self.logger.error("BANNED by sina again..is_pub_page. from get_user_info()")
-                print 'banned...sleep for 1800 seconds...'
-                time.sleep(1800)
+                print 'banned...sleep for 2400 seconds...'
+                time.sleep(2400)
             else:
                 following_id_list.append(following_id)
+        print "has finished stored all the following users of %s" % str(user_id)
         for following_id in following_id_list:
-            print following_id
+            print "%s ---> %s" % (str(user_id), str(following_id))
             #self.store_follow_into_db(user_id, following_id)
         return True
 
@@ -228,15 +246,30 @@ class Controller:
                 'User-Agent': self.config.get('crawler','User-Agent'),
                 'Cookie': cookie_str}
         start_user_id = self.config.get("crawler", "start_user_id")
-        self.get_user_following(headers, start_user_id)
+        #self.get_user_following(headers, start_user_id)
+        count = 0
         while 1:
             to_visit_list = self.fill_to_visit_list()
+            if len(to_visit_list) == 0:
+                count = count + 1
+                if count == 10:
+                    print "seems the crawler may end here"
+                    break
+            else:
+                count = count -1
             for user_id in to_visit_list:
-                if self.get_user_following(headers, user_id):
-                    self.update_user_is_visited(user_id)
+                # if this user did have some followings..means followings_count != 0
+                if self.get_followingscount_by_userid(user_id) != '0':
+                    if self.get_user_following(headers, user_id):
+                        self.update_user_is_visited(user_id)
+                    else:
+                        time.sleep(5)
                 else:
-                    time.sleep(1200)
-                time.sleep(10)
+                    print "following count of %s is 0.." % str(user_id)
+                    self.update_user_is_visited(user_id)
+                time_sleep = random.randint(4,20)
+                print 'finished store_one_followingUser, will sleep for %s secs' % str(time_sleep)
+                time.sleep(time_sleep)
 
 
 if __name__ == '__main__':

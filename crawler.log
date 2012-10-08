@@ -1,4 +1,14 @@
-2012-10-07 22:37:29,119 INFO the Login module has finished login
-2012-10-07 22:37:29,119 INFO OKAY, this info is from controller class
-2012-10-07 22:37:29,728 ERROR BANNED by sina, coz is_pub_page..
-2012-10-07 22:37:30,386 ERROR BANNED by sina, coz is_pub_page..
+2012-10-08 16:01:28,343 INFO the Login module has finished login
+2012-10-08 16:01:28,343 INFO OKAY, this info is from controller class
+2012-10-08 16:04:34,814 INFO the Login module has finished login
+2012-10-08 16:04:34,814 INFO OKAY, this info is from controller class
+2012-10-08 16:05:11,645 ERROR looks like the info page html has no such class, maybe speed is too fast
+2012-10-08 16:05:11,645 INFO will now sleep for 10 seconds
+2012-10-08 16:05:34,407 ERROR looks like the info page html has no such class, maybe speed is too fast
+2012-10-08 16:05:34,407 INFO will now sleep for 10 seconds
+2012-10-08 16:20:17,204 INFO the Login module has finished login
+2012-10-08 16:20:17,204 INFO OKAY, this info is from controller class
+2012-10-08 16:31:35,336 ERROR BANNED by sina again..is_pub_page. from get_user_info()
+2012-10-08 16:49:38,538 INFO the Login module has finished login
+2012-10-08 16:49:38,539 INFO OKAY, this info is from controller class
+2012-10-08 16:49:38,924 ERROR BANNED by sina, coz is_pub_page..
