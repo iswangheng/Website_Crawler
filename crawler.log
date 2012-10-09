@@ -1,2 +1,59 @@
-2012-10-08 21:34:11,035 INFO the Login module has finished login
-2012-10-08 21:34:11,035 INFO OKAY, this info is from controller class
+2012-10-08 22:41:28,801 INFO the Login module has finished login
+2012-10-08 22:41:28,802 INFO OKAY, this info is from controller class
+2012-10-08 22:42:38,432 INFO the Login module has finished login
+2012-10-08 22:42:38,432 INFO OKAY, this info is from controller class
+2012-10-08 22:55:36,681 INFO the Login module has finished login
+2012-10-08 22:55:36,681 INFO OKAY, this info is from controller class
+2012-10-08 23:25:36,107 ERROR index out of bound...less than 3 <div class='c'>
+2012-10-08 23:43:18,848 INFO the Login module has finished login
+2012-10-08 23:43:18,849 INFO OKAY, this info is from controller class
+2012-10-08 23:43:19,294 ERROR 1854869497 pagelist div NOT FOUND. maybe just a few(one page..) followings or speed too fast..
+2012-10-08 23:43:19,950 ERROR BANNED by sina again..is_pub_page. from get_user_info()
+2012-10-08 23:43:33,016 INFO the Login module has finished login
+2012-10-08 23:43:33,016 INFO OKAY, this info is from controller class
+2012-10-08 23:43:33,504 ERROR BANNED by sina, coz is_pub_page..
+2012-10-08 23:45:10,128 INFO the Login module has finished login
+2012-10-08 23:45:10,129 INFO OKAY, this info is from controller class
+2012-10-08 23:45:29,332 INFO the Login module has finished login
+2012-10-08 23:45:29,333 INFO OKAY, this info is from controller class
+2012-10-08 23:47:11,730 INFO the Login module has finished login
+2012-10-08 23:47:11,730 INFO OKAY, this info is from controller class
+2012-10-08 23:47:53,191 INFO the Login module has finished login
+2012-10-08 23:47:53,191 INFO OKAY, this info is from controller class
+2012-10-08 23:48:55,262 INFO the Login module has finished login
+2012-10-08 23:48:55,263 INFO OKAY, this info is from controller class
+2012-10-08 23:48:55,643 ERROR 1854869497 pagelist div NOT FOUND. maybe just a few(one page..) followings or speed too fast..
+2012-10-08 23:53:41,967 INFO 1638781994 maybe 0 followings or speed too fast..
+2012-10-09 00:00:56,277 ERROR looks like the info page html has no such class, maybe speed is too fast
+2012-10-09 00:00:56,278 INFO will now sleep for 10 seconds
+2012-10-09 00:03:06,758 ERROR looks like the info page html has no such class, maybe speed is too fast
+2012-10-09 00:03:06,759 INFO will now sleep for 10 seconds
+2012-10-09 00:05:14,647 ERROR looks like the info page html has no such class, maybe speed is too fast
+2012-10-09 00:05:14,647 INFO will now sleep for 10 seconds
+2012-10-09 01:20:22,347 ERROR looks like the info page html has no such class, maybe speed is too fast
+2012-10-09 01:20:22,347 INFO will now sleep for 10 seconds
+2012-10-09 03:49:51,543 ERROR 1007701954 pagelist div NOT FOUND. maybe just a few(one page..) followings or speed too fast..
+2012-10-09 03:49:51,875 ERROR BANNED by sina again..is_pub_page. from get_user_info()
+2012-10-09 05:58:22,299 ERROR BANNED by sina again..is_pub_page. from get_user_info()
+2012-10-09 07:51:28,883 ERROR index out of bound...less than 3 <div class='c'>
+2012-10-09 07:58:37,196 ERROR BANNED by sina again..is_pub_page. from get_user_info()
+2012-10-09 09:57:50,411 ERROR BANNED by sina again..is_pub_page. from get_user_info()
+2012-10-09 11:59:09,501 ERROR BANNED by sina again..is_pub_page. from get_user_info()
+2012-10-09 12:59:20,935 INFO the Login module has finished login
+2012-10-09 12:59:20,936 INFO OKAY, this info is from controller class
+2012-10-09 12:59:21,436 INFO 1241679004 maybe 0 followings or speed too fast..
+2012-10-09 12:59:21,436 INFO Okay, will now store the 0 followings of 1241679004
+2012-10-09 13:02:28,755 INFO the Login module has finished login
+2012-10-09 13:02:28,755 INFO OKAY, this info is from controller class
+2012-10-09 13:02:29,236 INFO 1241679004 maybe 0 followings or speed too fast..
+2012-10-09 13:02:29,237 INFO Okay, will now store the 0 followings of 1241679004
+2012-10-09 13:02:41,673 INFO the Login module has finished login
+2012-10-09 13:02:41,673 INFO OKAY, this info is from controller class
+2012-10-09 13:26:40,438 INFO the Login module has finished login
+2012-10-09 13:26:40,439 INFO OKAY, this info is from controller class
+2012-10-09 13:26:40,724 ERROR 2313107867 pagelist div NOT FOUND. maybe just a few(one page..) followings or speed too fast..
+2012-10-09 13:28:12,018 INFO Okay, will now store the 5 followings of 2313107867
+2012-10-09 13:35:30,761 INFO the Login module has finished login
+2012-10-09 13:35:30,761 INFO OKAY, this info is from controller class
+2012-10-09 13:35:31,124 INFO 1241679004 maybe 0 followings or speed too fast..
+2012-10-09 13:35:31,124 INFO Okay, will now store the 0 followings of 1241679004

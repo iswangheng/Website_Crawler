@@ -1,10 +1,10 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-import urllib2
+# -*- coding: utf-8 -*- import urllib2
 import time
 import datetime
 import orm
 import random
+import urllib2
 from urllib2 import URLError
 
 from login import Login
@@ -114,9 +114,11 @@ class Controller:
         to_visit_list = []
         try:
             query = self.session.query(orm.Users)
+            print "fill_to_visit_list: will query.."
             users = query.filter(orm.Users.is_visited == 0).filter(orm.Users.is_picked == 0).limit(1)
             for user in users:
                 to_visit_list.append(user.idusers)
+                print "now start id: %s" % str(user.idusers)
                 pick_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 self.session.query(orm.Users).filter(orm.Users.idusers == user.idusers).update(
                         {'is_picked': 1, 'pick_time':pick_time})
@@ -234,6 +236,7 @@ class Controller:
             else:
                 following_id_list.append(following_id)
         print "has finished stored all the following users of %s" % str(user_id)
+        self.logger.info("Okay, will now store the %s followings of %s" % (str(len(following_id_list)),str(user_id)))
         for following_id in following_id_list:
             print "%s ---> %s" % (str(user_id), str(following_id))
             self.store_follow_into_db(user_id, following_id)
@@ -244,42 +247,48 @@ class Controller:
         """start_crawler function is the entry main func
            will start the crawler
         """
-        self.login_instance.login_weibo()
-        self.logger.info('OKAY, this info is from controller class')
-        cookie_str = self.config.get('crawler','user_token') + '=' + self.cookie_dict[self.config.get('crawler','user_token')] \
-                        + ';' + \
-                        self.config.get('crawler','user_id') + '=' + self.cookie_dict[self.config.get('crawler','user_id')]
-        self.cookie_str = cookie_str
-        print 'start visiting!: ', self.cookie_str
-        headers = {
-                'User-Agent': self.config.get('crawler','User-Agent'),
-                'Cookie': cookie_str}
-        start_user_id = self.config.get("crawler", "start_user_id")
-        #self.get_user_following(headers, start_user_id)
         count = 0
+        when_to_restart = 0
         while 1:
-            to_visit_list = self.fill_to_visit_list()
-            if len(to_visit_list) == 0:
-                count = count + 1
-                if count == 10:
-                    print "seems the crawler may end here"
-                    break
-            else:
-                count = count -1
-            for user_id in to_visit_list:
-                # if this user did have some followings..means followings_count != 0
-                if self.get_followingscount_by_userid(user_id) != '0':
-                    if self.get_user_following(headers, user_id):
-                        self.update_user_is_visited(user_id)
-                    else:
-                        # banned by sina...sleep for a long time...
-                        time.sleep(2400)
+            self.login_instance.login_weibo()
+            self.logger.info('OKAY, this info is from controller class')
+            cookie_str = self.config.get('crawler','user_token') + '=' + self.cookie_dict[self.config.get('crawler','user_token')] \
+                            + ';' + \
+                            self.config.get('crawler','user_id') + '=' + self.cookie_dict[self.config.get('crawler','user_id')]
+            self.cookie_str = cookie_str
+            print 'start visiting!: ', self.cookie_str
+            headers = {
+                    'User-Agent': self.config.get('crawler','User-Agent'),
+                    'Cookie': cookie_str}
+            #start_user_id = self.config.get("crawler", "start_user_id")
+            #self.get_user_following(headers, start_user_id)
+            while 1:
+                when_to_restart = when_to_restart + 1
+                to_visit_list = self.fill_to_visit_list()
+                if len(to_visit_list) == 0:
+                    count = count + 1
                 else:
-                    print "following count of %s is 0.." % str(user_id)
-                    self.update_user_is_visited(user_id)
-                time_sleep = random.randint(10,20)
-                print 'finished store_one_followingUser, will sleep for %s secs' % str(time_sleep)
-                time.sleep(time_sleep)
+                    count = count -1
+                for user_id in to_visit_list:
+                    # if this user did have some followings..means followings_count != 0
+                    if self.get_followingscount_by_userid(user_id) != '0':
+                        if self.get_user_following(headers, user_id):
+                            self.update_user_is_visited(user_id)
+                        else:
+                            # banned by sina...sleep for a long time...
+                            time.sleep(2400)
+                    else:
+                        print "following count of %s is 0.." % str(user_id)
+                        self.update_user_is_visited(user_id)
+                    time_sleep = random.randint(10,20)
+                    print 'finished store_one_followingUser, will sleep for %s secs' % str(time_sleep)
+                    time.sleep(time_sleep)
+                # login again just in case of the expire of cookie...
+                if when_to_restart == 10:
+                    break
+            if count == 10:
+                print "seems the crawler may end here"
+                break
 
 
 if __name__ == '__main__':
